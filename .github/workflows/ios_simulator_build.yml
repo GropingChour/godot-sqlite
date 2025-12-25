@@ -1,4 +1,4 @@
-name: 🍏 iOS Builds
+name: 🍏 iOS Simulator Builds
 on:
   push:
     branches: [ godot-3.x-build ]
@@ -11,9 +11,9 @@ env:
   TARGET: release
 
 jobs:
-  ios-compilation:
-    name: iOS Compilation
-    runs-on: "macos-latest"
+  ios-simulator-compilation:
+    name: iOS Simulator Compilation
+    runs-on: "macos-11"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,6 +30,11 @@ jobs:
           # Optional - x64 or x86 architecture, defaults to x64
           architecture: 'x64'
 
+      - name: Set Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '12.5.1'  # 指定支持x86_64的Xcode版本
+
       - name: Configuring Python packages
         run: |
           python -c "import sys; print(sys.version)"
@@ -39,21 +44,17 @@ jobs:
 
       - name: Compilation
         run: |
-          mkdir -v -p ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/armv7
-          mkdir -v -p ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/arm64
+          mkdir -v -p ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/x86_64
           cd ${{env.PROJECT_FOLDER}}
           cd godot-cpp
-          scons platform=ios ios_arch=armv7 bits=64 target=${{env.TARGET}} generate_bindings=yes -j4
-          scons platform=ios ios_arch=arm64 bits=64 target=${{env.TARGET}} generate_bindings=yes -j4
+          scons platform=ios ios_arch=x86_64 bits=64 target=${{env.TARGET}} generate_bindings=yes -j4
           ls bin/
           cd ..
-          scons platform=ios ios_arch=armv7 target=${{env.TARGET}} target_path=${{env.TARGET_PATH}} target_name=${{env.TARGET_NAME}}
-          scons platform=ios ios_arch=arm64 target=${{env.TARGET}} target_path=${{env.TARGET_PATH}} target_name=${{env.TARGET_NAME}}
-          cp godot-cpp/bin/libgodot-cpp.ios.release.arm64.a ${{env.TARGET_PATH}}/arm64/libgodot-cpp.ios.release.arm64.a
-          cp godot-cpp/bin/libgodot-cpp.ios.release.armv7.a ${{env.TARGET_PATH}}/armv7/libgodot-cpp.ios.release.armv7.a
+          scons platform=ios ios_arch=x86_64 target=${{env.TARGET}} target_path=${{env.TARGET_PATH}} target_name=${{env.TARGET_NAME}}
+          cp godot-cpp/bin/libgodot-cpp.ios.release.x86_64.a ${{env.TARGET_PATH}}/x86_64/libgodot-cpp.ios.release.x86_64.a
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios
-          path: ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}
+          name: ios-simulator
+          path: ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/x86_64
