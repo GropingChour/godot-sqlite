@@ -48,8 +48,30 @@ jobs:
           scons platform=ios ios_arch=arm64 ios_simulator=yes target=${{env.TARGET}} target_path=${{env.TARGET_PATH}} target_name=${{env.TARGET_NAME}}
           cp godot-cpp/bin/libgodot-cpp.ios.release.arm64.simulator.a ${{env.TARGET_PATH}}/arm64/libgodot-cpp.ios.release.arm64.simulator.a
 
+      - name: Download Device Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios
+          path: device_libs
+
+      - name: Create XCFramework
+        run: |
+          mkdir -p xcframework
+          xcodebuild -create-xcframework \
+            -library device_libs/arm64/libgdsqlite.a \
+            -headers godot-cpp/godot-headers/ \
+            -library ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/arm64/libgdsqlite.a \
+            -headers godot-cpp/godot-headers/ \
+            -output xcframework/libgdsqlite.xcframework
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator
           path: ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/arm64
+
+      - name: Upload XCFramework Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcframework
+          path: xcframework
