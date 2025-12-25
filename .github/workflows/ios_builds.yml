@@ -31,6 +31,11 @@ jobs:
           architecture: 'x64'
 
       # You can test your matrix by printing the current Python version
+      - name: Set Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '12.5.1'  # 指定支持x86_64的Xcode版本
+
       - name: Configuring Python packages
         run: |
           python -c "import sys; print(sys.version)"

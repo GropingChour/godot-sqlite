@@ -169,6 +169,10 @@ opts.Update(env)
 # Generates help for the -h scons option.
 Help(opts.GenerateHelpText(env))
 
+# Auto-set ios_simulator for x86_64 architecture
+if env['platform'] == 'ios' and env['ios_arch'] == 'x86_64':
+    env['ios_simulator'] = True
+
 # For the reference:
 # - CCFLAGS are compilation flags shared between C and C++
 # - CFLAGS are for C-specific compilation flags
