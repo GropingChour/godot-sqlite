@@ -13,7 +13,7 @@ env:
 jobs:
   ios-simulator-compilation:
     name: iOS Simulator Compilation
-    runs-on: "macos-11"
+    runs-on: "macos-latest"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,11 +30,6 @@ jobs:
           # Optional - x64 or x86 architecture, defaults to x64
           architecture: 'x64'
 
-      - name: Set Xcode version
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '12.5.1'  # 指定支持x86_64的Xcode版本
-
       - name: Configuring Python packages
         run: |
           python -c "import sys; print(sys.version)"
@@ -44,17 +39,17 @@ jobs:
 
       - name: Compilation
         run: |
-          mkdir -v -p ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/x86_64
+          mkdir -v -p ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/arm64
           cd ${{env.PROJECT_FOLDER}}
           cd godot-cpp
-          scons platform=ios ios_arch=x86_64 bits=64 target=${{env.TARGET}} generate_bindings=yes -j4
+          scons platform=ios ios_arch=arm64 ios_simulator=yes bits=64 target=${{env.TARGET}} generate_bindings=yes -j4
           ls bin/
           cd ..
-          scons platform=ios ios_arch=x86_64 target=${{env.TARGET}} target_path=${{env.TARGET_PATH}} target_name=${{env.TARGET_NAME}}
-          cp godot-cpp/bin/libgodot-cpp.ios.release.x86_64.a ${{env.TARGET_PATH}}/x86_64/libgodot-cpp.ios.release.x86_64.a
+          scons platform=ios ios_arch=arm64 ios_simulator=yes target=${{env.TARGET}} target_path=${{env.TARGET_PATH}} target_name=${{env.TARGET_NAME}}
+          cp godot-cpp/bin/libgodot-cpp.ios.release.arm64.simulator.a ${{env.TARGET_PATH}}/arm64/libgodot-cpp.ios.release.arm64.simulator.a
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator
-          path: ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/x86_64
+          path: ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/arm64
