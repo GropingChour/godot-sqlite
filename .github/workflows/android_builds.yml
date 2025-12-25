@@ -28,6 +28,11 @@ jobs:
           distribution: 'zulu'
           java-version: '8'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'ndk;25.1.8937393'
+
       # Use python 3.x release (works cross platform)
       - name: Set up Python 3.x
         uses: actions/setup-python@v5
