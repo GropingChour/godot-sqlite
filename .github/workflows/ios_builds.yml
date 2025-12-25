@@ -57,3 +57,85 @@ jobs:
         with:
           name: ios
           path: ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}
+
+  ios-simulator-compilation:
+    name: iOS Simulator Compilation
+    runs-on: "macos-latest"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          submodules: recursive
+
+      # Use python 3.x release (works cross platform)
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v5
+        with:
+          # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+          # Optional - x64 or x86 architecture, defaults to x64
+          architecture: 'x64'
+
+      - name: Configuring Python packages
+        run: |
+          python -c "import sys; print(sys.version)"
+          python -m pip install scons
+          python --version
+          scons --version
+
+      - name: Compilation
+        run: |
+          mkdir -v -p ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/arm64
+          cd ${{env.PROJECT_FOLDER}}
+          cd godot-cpp
+          scons platform=ios ios_arch=arm64 ios_simulator=yes bits=64 target=${{env.TARGET}} generate_bindings=yes -j4
+          ls bin/
+          cd ..
+          scons platform=ios ios_arch=arm64 ios_simulator=yes target=${{env.TARGET}} target_path=${{env.TARGET_PATH}} target_name=${{env.TARGET_NAME}}
+          cp godot-cpp/bin/libgodot-cpp.ios.release.arm64.simulator.a ${{env.TARGET_PATH}}/arm64/libgodot-cpp.ios.release.arm64.simulator.a
+
+      - name: Upload Simulator Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator
+          path: ${{env.PROJECT_FOLDER}}/${{env.TARGET_PATH}}/arm64
+
+  ios-xcframework:
+    name: Create iOS XCFramework
+    runs-on: "macos-latest"
+    needs: [ios-compilation, ios-simulator-compilation]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          submodules: recursive
+
+      - name: Download Device Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios
+          path: device_libs
+
+      - name: Download Simulator Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-simulator
+          path: simulator_libs
+
+      - name: Create XCFramework
+        run: |
+          mkdir -p xcframework
+          xcodebuild -create-xcframework \
+            -library device_libs/arm64/libgdsqlite.a \
+            -headers godot-cpp/godot-headers/ \
+            -library simulator_libs/libgdsqlite.a \
+            -headers godot-cpp/godot-headers/ \
+            -output xcframework/libgdsqlite.xcframework
+
+      - name: Upload XCFramework Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcframework
+          path: xcframework
